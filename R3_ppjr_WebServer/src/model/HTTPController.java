@@ -60,9 +60,10 @@ public class HTTPController implements Runnable {
 //        for(int i=0; i<splitMessage.length; i++){
 //            System.out.println(splitMessage[i]);
 //        }
-
-            outToClient.write("HTTP/1.1 404 Not Found /r/n".getBytes());
-            outToClient.write("/r/n".getBytes());
+            
+            String s = "HTTP/1.1 404 Not Found /r/n" + "/r/n";
+            
+            outToClient.write(s.getBytes());
 
             outToClient.close();
         } catch (IOException ex) {
