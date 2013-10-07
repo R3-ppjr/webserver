@@ -5,11 +5,12 @@
 package model;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +22,7 @@ import java.util.logging.Logger;
 public class HTTPController implements Runnable {
 
     private Socket connection;
+    private static final String ROOT_CATALOG = "c:\\web";
 
     public HTTPController(Socket connection) {
         this.connection = connection;
@@ -36,34 +38,54 @@ public class HTTPController implements Runnable {
             String message = inFromClient.readLine();
 
             String[] splitMessage = message.split(" ");
+            
+//            for(int i=0; i<splitMessage.length; i++){
+//                System.out.println(splitMessage[i]);
+//            }
 
             switch (splitMessage[0]) {
                 case "GET":
-                    System.out.println("GET");
+                    FileInputStream file;
+                    String header;
+                    try {
+                        if((splitMessage[1].equals("/")) ){
+                            file = new FileInputStream(ROOT_CATALOG + "/index.html");
+                        }
+                        else{
+                            file = new FileInputStream(ROOT_CATALOG + splitMessage[1]);
+                        }
+                        header = "HTTP/1.1 200 ok\r\n";
+                        header += "Content-Type: text/html\r\n";
+                        header += "\r\n";
+                    }
+                    catch(FileNotFoundException e){
+                        file = new FileInputStream(ROOT_CATALOG + "/404.html");
+                        header = "HTTP/1.1 404 Not Found\r\n";
+                        header += "Content-Type: text/html\r\n";
+                        header += "\r\n";
+                    }
+
+                    outToClient.write(header.getBytes());
+
+                    copy(file, outToClient);
+                    file.close();
                     break;
-                case "HEAD":
-                    break;
-                case "PUT":
-                    break;
-                case "POST":
-                    break;
-                case "DELETE":
-                    break;
-                case "LINK":
-                    break;
-                case "UNLINK":
-                    break;
+//                case "HEAD":
+//                    break;
+//                case "PUT":
+//                    break;
+//                case "POST":
+//                    break;
+//                case "DELETE":
+//                    break;
+//                case "LINK":
+//                    break;
+//                case "UNLINK":
+//                    break;
                 default:
+                    System.out.println("default");
                     break;
             }
-
-//        for(int i=0; i<splitMessage.length; i++){
-//            System.out.println(splitMessage[i]);
-//        }
-            
-            String s = "HTTP/1.1 404 Not Found /r/n" + "/r/n";
-            
-            outToClient.write(s.getBytes());
 
             outToClient.close();
         } catch (IOException ex) {
@@ -71,6 +93,14 @@ public class HTTPController implements Runnable {
         }
     }
 
-    public void respond(String responce) {
+    private static void copy(final InputStream input, final OutputStream output) throws IOException {
+        final byte[] buffer = new byte[100];
+        while (true) {
+            int bytesRead = input.read(buffer);
+            if (bytesRead == -1) {
+                break;
+            }
+            output.write(buffer, 0, bytesRead);
+        }
     }
 }
